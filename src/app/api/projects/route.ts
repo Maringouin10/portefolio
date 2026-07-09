@@ -5,7 +5,10 @@ import { uniqueSlug } from "@/lib/slug";
 
 export async function GET() {
   const projects = await prisma.project.findMany({
-    include: { images: { orderBy: { order: "asc" } } },
+    include: {
+      images: { orderBy: { order: "asc" } },
+      videos: { orderBy: { order: "asc" } },
+    },
     orderBy: { createdAt: "desc" },
   });
   return NextResponse.json(projects);
@@ -38,10 +41,15 @@ export async function POST(req: NextRequest) {
       }
     }
 
-    let videoUrl = (formData.get("videoUrl") as string | null)?.trim() || null;
-    const videoFile = formData.get("videoFile") as File | null;
-    if (videoFile && videoFile.size > 0) {
-      videoUrl = await saveUploadedFile(videoFile, "videos", "video");
+    const videoUrlEntries = (formData.getAll("videoUrls") as string[])
+      .map((url) => url.trim())
+      .filter(Boolean);
+    const videoFiles = formData.getAll("videoFiles") as File[];
+    const videoPaths: string[] = [...videoUrlEntries];
+    for (const file of videoFiles) {
+      if (file && file.size > 0) {
+        videoPaths.push(await saveUploadedFile(file, "videos", "video"));
+      }
     }
 
     let modelFile: string | null = null;
@@ -61,13 +69,13 @@ export async function POST(req: NextRequest) {
         description,
         category,
         coverImage,
-        videoUrl,
         modelFile,
         modelFileName,
         published,
         images: { create: galleryPaths.map((url, order) => ({ url, order })) },
+        videos: { create: videoPaths.map((url, order) => ({ url, order })) },
       },
-      include: { images: true },
+      include: { images: true, videos: true },
     });
 
     return NextResponse.json(project, { status: 201 });

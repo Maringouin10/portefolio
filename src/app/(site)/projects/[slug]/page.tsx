@@ -10,7 +10,10 @@ export const dynamic = "force-dynamic";
 export default async function ProjectPage({ params }: { params: { slug: string } }) {
   const project = await prisma.project.findUnique({
     where: { slug: params.slug },
-    include: { images: { orderBy: { order: "asc" } } },
+    include: {
+      images: { orderBy: { order: "asc" } },
+      videos: { orderBy: { order: "asc" } },
+    },
   });
 
   if (!project || !project.published) {
@@ -63,10 +66,16 @@ export default async function ProjectPage({ params }: { params: { slug: string }
         </section>
       )}
 
-      {project.videoUrl && (
+      {project.videos.length > 0 && (
         <section className="mt-14">
-          <h2 className="text-xs uppercase tracking-widest text-black/50 mb-3">Video</h2>
-          <VideoPlayer url={project.videoUrl} />
+          <h2 className="text-xs uppercase tracking-widest text-black/50 mb-3">
+            {project.videos.length > 1 ? "Videos" : "Video"}
+          </h2>
+          <div className="space-y-8">
+            {project.videos.map((video) => (
+              <VideoPlayer key={video.id} url={video.url} />
+            ))}
+          </div>
         </section>
       )}
     </div>

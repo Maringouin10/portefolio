@@ -16,12 +16,13 @@ public, et un dashboard d'administration sur `/admin` pour tout gerer.
 ## Fonctionnalites
 
 - **Public (`/`)** : grille de projets façon Thingiverse, filtre par categorie,
-  page detail par projet avec galerie d'images, lecteur video (upload ou lien
-  YouTube/Vimeo), apercu 3D interactif et bouton de telechargement du fichier 3D.
+  page detail par projet avec galerie d'images, une ou plusieurs videos
+  (upload et/ou liens YouTube/Vimeo), apercu 3D interactif et bouton de
+  telechargement du fichier 3D.
 - **Admin (`/admin`)** : connexion, liste des projets, creation/edition avec
-  upload d'images (couverture + galerie), video (fichier ou URL) et fichier 3D
-  (`.glb`, `.gltf`, `.stl`, `.obj`, `.3mf`, `.fbx`), suppression, statut
-  publie/brouillon.
+  upload d'images (couverture + galerie), plusieurs videos (fichiers et/ou
+  URLs, ajout et suppression individuelle) et fichier 3D (`.glb`, `.gltf`,
+  `.stl`, `.obj`, `.3mf`, `.fbx`), suppression, statut publie/brouillon.
 
 ## Demarrage rapide avec Docker
 

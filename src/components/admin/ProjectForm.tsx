@@ -4,6 +4,7 @@ import { useState, FormEvent } from "react";
 import { useRouter } from "next/navigation";
 
 type ExistingImage = { id: string; url: string };
+type ExistingVideo = { id: string; url: string };
 
 type ProjectData = {
   id: string;
@@ -11,11 +12,11 @@ type ProjectData = {
   description: string;
   category: string | null;
   coverImage: string;
-  videoUrl: string | null;
   modelFile: string | null;
   modelFileName: string | null;
   published: boolean;
   images: ExistingImage[];
+  videos: ExistingVideo[];
 };
 
 export default function ProjectForm({ project }: { project?: ProjectData }) {
@@ -24,16 +25,14 @@ export default function ProjectForm({ project }: { project?: ProjectData }) {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [removeImages, setRemoveImages] = useState<string[]>([]);
-
-  const externalVideoUrl =
-    project?.videoUrl && !project.videoUrl.startsWith("/uploads/") ? project.videoUrl : "";
-  const uploadedVideoName =
-    project?.videoUrl && project.videoUrl.startsWith("/uploads/")
-      ? project.videoUrl.split("/").pop()
-      : null;
+  const [removeVideos, setRemoveVideos] = useState<string[]>([]);
 
   function toggleRemove(id: string) {
     setRemoveImages((prev) => (prev.includes(id) ? prev.filter((x) => x !== id) : [...prev, id]));
+  }
+
+  function toggleRemoveVideo(id: string) {
+    setRemoveVideos((prev) => (prev.includes(id) ? prev.filter((x) => x !== id) : [...prev, id]));
   }
 
   async function handleSubmit(e: FormEvent<HTMLFormElement>) {
@@ -43,6 +42,15 @@ export default function ProjectForm({ project }: { project?: ProjectData }) {
 
     const formData = new FormData(e.currentTarget);
     removeImages.forEach((id) => formData.append("removeImages", id));
+    removeVideos.forEach((id) => formData.append("removeVideos", id));
+
+    const videoUrlsText = (formData.get("videoUrlsText") as string) || "";
+    formData.delete("videoUrlsText");
+    videoUrlsText
+      .split("\n")
+      .map((line) => line.trim())
+      .filter(Boolean)
+      .forEach((url) => formData.append("videoUrls", url));
 
     try {
       const res = await fetch(isEdit ? `/api/projects/${project!.id}` : "/api/projects", {
@@ -154,23 +162,51 @@ export default function ProjectForm({ project }: { project?: ProjectData }) {
       </div>
 
       <div>
-        <label className="block text-xs uppercase tracking-widest mb-2">Video (URL YouTube / Vimeo)</label>
-        <input
-          name="videoUrl"
-          defaultValue={externalVideoUrl}
-          placeholder="https://youtube.com/watch?v=..."
+        <label className="block text-xs uppercase tracking-widest mb-2">Videos</label>
+        {project && project.videos.length > 0 && (
+          <ul className="mb-3 space-y-1">
+            {project.videos.map((v) => {
+              const label = v.url.startsWith("/uploads/") ? v.url.split("/").pop() : v.url;
+              return (
+                <li
+                  key={v.id}
+                  className={`flex items-center justify-between border px-3 py-2 text-sm ${
+                    removeVideos.includes(v.id) ? "border-red-500 opacity-40" : "border-black/10"
+                  }`}
+                >
+                  <span className="truncate mr-2">{label}</span>
+                  <label className="flex items-center gap-1 shrink-0 cursor-pointer">
+                    <input
+                      type="checkbox"
+                      checked={removeVideos.includes(v.id)}
+                      onChange={() => toggleRemoveVideo(v.id)}
+                    />
+                    <span className="text-xs uppercase tracking-widest">Supprimer</span>
+                  </label>
+                </li>
+              );
+            })}
+          </ul>
+        )}
+        <label className="block text-xs uppercase tracking-widest mb-2">
+          Ajouter des URLs (YouTube / Vimeo, une par ligne)
+        </label>
+        <textarea
+          name="videoUrlsText"
+          rows={3}
+          placeholder={"https://youtube.com/watch?v=...\nhttps://vimeo.com/..."}
           className="w-full border border-black px-3 py-2 focus:outline-none"
         />
-        <label className="block text-xs uppercase tracking-widest mb-2 mt-3">Ou fichier video</label>
+        <label className="block text-xs uppercase tracking-widest mb-2 mt-3">
+          Ou ajouter des fichiers video
+        </label>
         <input
           type="file"
-          name="videoFile"
+          name="videoFiles"
           accept="video/*"
+          multiple
           className="w-full border border-black px-3 py-2 file:mr-4 file:border-0 file:bg-black file:text-white file:px-3 file:py-1.5 file:uppercase file:text-xs file:tracking-widest"
         />
-        {uploadedVideoName && (
-          <p className="text-xs text-black/40 mt-1">Fichier actuel : {uploadedVideoName}</p>
-        )}
       </div>
 
       <div>

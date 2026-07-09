@@ -6,7 +6,10 @@ import { uniqueSlug } from "@/lib/slug";
 export async function GET(_req: NextRequest, { params }: { params: { id: string } }) {
   const project = await prisma.project.findUnique({
     where: { id: params.id },
-    include: { images: { orderBy: { order: "asc" } } },
+    include: {
+      images: { orderBy: { order: "asc" } },
+      videos: { orderBy: { order: "asc" } },
+    },
   });
   if (!project) {
     return NextResponse.json({ error: "Projet introuvable" }, { status: 404 });
@@ -18,7 +21,7 @@ export async function PUT(req: NextRequest, { params }: { params: { id: string }
   try {
     const existing = await prisma.project.findUnique({
       where: { id: params.id },
-      include: { images: true },
+      include: { images: true, videos: true },
     });
     if (!existing) {
       return NextResponse.json({ error: "Projet introuvable" }, { status: 404 });
@@ -47,21 +50,6 @@ export async function PUT(req: NextRequest, { params }: { params: { id: string }
       await deleteUploadedFile(existing.coverImage);
     }
 
-    let videoUrl = existing.videoUrl;
-    const videoFile = formData.get("videoFile") as File | null;
-    const videoUrlField = formData.get("videoUrl");
-    if (videoFile && videoFile.size > 0) {
-      videoUrl = await saveUploadedFile(videoFile, "videos", "video");
-      await deleteUploadedFile(
-        existing.videoUrl?.startsWith("/uploads/") ? existing.videoUrl : null
-      );
-    } else if (typeof videoUrlField === "string") {
-      videoUrl = videoUrlField.trim() || null;
-      if (existing.videoUrl?.startsWith("/uploads/") && existing.videoUrl !== videoUrl) {
-        await deleteUploadedFile(existing.videoUrl);
-      }
-    }
-
     let modelFile = existing.modelFile;
     let modelFileName = existing.modelFileName;
     const modelUpload = formData.get("modelFile") as File | null;
@@ -80,7 +68,20 @@ export async function PUT(req: NextRequest, { params }: { params: { id: string }
       }
     }
 
-    const remainingCount = existing.images.filter((img) => !removeImageIds.includes(img.id)).length;
+    const removeVideoIds = formData.getAll("removeVideos") as string[];
+    const newVideoUrlEntries = (formData.getAll("videoUrls") as string[])
+      .map((url) => url.trim())
+      .filter(Boolean);
+    const newVideoFiles = formData.getAll("videoFiles") as File[];
+    const newVideoPaths: string[] = [...newVideoUrlEntries];
+    for (const file of newVideoFiles) {
+      if (file && file.size > 0) {
+        newVideoPaths.push(await saveUploadedFile(file, "videos", "video"));
+      }
+    }
+
+    const remainingImageCount = existing.images.filter((img) => !removeImageIds.includes(img.id)).length;
+    const remainingVideoCount = existing.videos.filter((v) => !removeVideoIds.includes(v.id)).length;
 
     const project = await prisma.$transaction(async (tx) => {
       if (removeImageIds.length > 0) {
@@ -97,14 +98,37 @@ export async function PUT(req: NextRequest, { params }: { params: { id: string }
           data: newImagePaths.map((url, i) => ({
             url,
             projectId: existing.id,
-            order: remainingCount + i,
+            order: remainingImageCount + i,
           })),
         });
       }
+
+      if (removeVideoIds.length > 0) {
+        const toRemove = existing.videos.filter((v) => removeVideoIds.includes(v.id));
+        await tx.projectVideo.deleteMany({
+          where: { id: { in: removeVideoIds }, projectId: existing.id },
+        });
+        for (const v of toRemove) {
+          await deleteUploadedFile(v.url);
+        }
+      }
+      if (newVideoPaths.length > 0) {
+        await tx.projectVideo.createMany({
+          data: newVideoPaths.map((url, i) => ({
+            url,
+            projectId: existing.id,
+            order: remainingVideoCount + i,
+          })),
+        });
+      }
+
       return tx.project.update({
         where: { id: existing.id },
-        data: { title, slug, description, category, coverImage, videoUrl, modelFile, modelFileName, published },
-        include: { images: { orderBy: { order: "asc" } } },
+        data: { title, slug, description, category, coverImage, modelFile, modelFileName, published },
+        include: {
+          images: { orderBy: { order: "asc" } },
+          videos: { orderBy: { order: "asc" } },
+        },
       });
     });
 
@@ -121,7 +145,7 @@ export async function PUT(req: NextRequest, { params }: { params: { id: string }
 export async function DELETE(_req: NextRequest, { params }: { params: { id: string } }) {
   const existing = await prisma.project.findUnique({
     where: { id: params.id },
-    include: { images: true },
+    include: { images: true, videos: true },
   });
   if (!existing) {
     return NextResponse.json({ error: "Projet introuvable" }, { status: 404 });
@@ -131,11 +155,11 @@ export async function DELETE(_req: NextRequest, { params }: { params: { id: stri
 
   await deleteUploadedFile(existing.coverImage);
   await deleteUploadedFile(existing.modelFile);
-  if (existing.videoUrl?.startsWith("/uploads/")) {
-    await deleteUploadedFile(existing.videoUrl);
-  }
   for (const img of existing.images) {
     await deleteUploadedFile(img.url);
+  }
+  for (const v of existing.videos) {
+    await deleteUploadedFile(v.url);
   }
 
   return NextResponse.json({ ok: true });

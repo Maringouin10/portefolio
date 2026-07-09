@@ -15,16 +15,24 @@ model Project {
   description   String
   category      String?
   coverImage    String
-  videoUrl      String?
   modelFile     String?
   modelFileName String?
   published     Boolean        @default(true)
   createdAt     DateTime       @default(now())
   updatedAt     DateTime       @updatedAt
   images        ProjectImage[]
+  videos        ProjectVideo[]
 }
 
 model ProjectImage {
+  id        String  @id @default(cuid())
+  url       String
+  order     Int     @default(0)
+  project   Project @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  projectId String
+}
+
+model ProjectVideo {
   id        String  @id @default(cuid())
   url       String
   order     Int     @default(0)
