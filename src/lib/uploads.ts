@@ -2,7 +2,11 @@ import { writeFile, mkdir, unlink } from "fs/promises";
 import path from "path";
 import { randomUUID } from "crypto";
 
-const UPLOAD_ROOT = path.join(process.cwd(), "public", "uploads");
+// Deliberately outside public/: Next.js only serves files that exist under
+// public/ at server boot, so anything uploaded at runtime would 404 until
+// the process restarts. Files are served instead via src/app/uploads/[...path]/route.ts,
+// which reads from disk on every request.
+const UPLOAD_ROOT = path.join(process.cwd(), "storage", "uploads");
 
 const LIMITS: Record<string, { extensions: string[]; maxBytes: number }> = {
   image: {
@@ -52,7 +56,8 @@ export async function saveUploadedFile(
 
 export async function deleteUploadedFile(publicPath: string | null | undefined) {
   if (!publicPath || !publicPath.startsWith("/uploads/")) return;
-  const filePath = path.join(process.cwd(), "public", publicPath);
+  const relative = publicPath.slice("/uploads/".length);
+  const filePath = path.join(UPLOAD_ROOT, relative);
   try {
     await unlink(filePath);
   } catch {

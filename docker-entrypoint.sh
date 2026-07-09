@@ -1,7 +1,7 @@
 #!/bin/sh
 set -e
 
-mkdir -p /app/data /app/public/uploads
+mkdir -p /app/data /app/storage/uploads
 
 npx prisma migrate deploy
 

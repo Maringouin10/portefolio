@@ -10,8 +10,8 @@ data/*
 *.db-journal
 
 # uploads
-public/uploads/*
-!public/uploads/.gitkeep
+storage/uploads/*
+!storage/uploads/.gitkeep
 
 # env
 .env

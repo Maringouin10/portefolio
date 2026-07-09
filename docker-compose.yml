@@ -10,7 +10,7 @@ services:
       - NODE_ENV=production
     volumes:
       - portfolio_data:/app/data
-      - portfolio_uploads:/app/public/uploads
+      - portfolio_uploads:/app/storage/uploads
     restart: unless-stopped
 
 volumes:

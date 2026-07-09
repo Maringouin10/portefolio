@@ -21,7 +21,7 @@ COPY --from=builder /app/.next ./.next
 COPY --from=builder /app/public ./public
 COPY --from=builder /app/prisma ./prisma
 COPY docker-entrypoint.sh ./docker-entrypoint.sh
-RUN chmod +x docker-entrypoint.sh && mkdir -p /app/data /app/public/uploads
+RUN chmod +x docker-entrypoint.sh && mkdir -p /app/data /app/storage/uploads
 
 EXPOSE 3000
 

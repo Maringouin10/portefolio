@@ -107,7 +107,8 @@ src/
 prisma/
   schema.prisma          modele de donnees (Project, ProjectImage, Admin)
   migrations/             migrations SQL
-public/uploads/          fichiers uploades (monte en volume Docker)
+storage/uploads/         fichiers uploades (monte en volume Docker, sert via
+                          src/app/uploads/[...path]/route.ts)
 ```
 
 ## Limites connues / pistes d'amelioration
