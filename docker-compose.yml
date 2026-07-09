@@ -1,0 +1,18 @@
+services:
+  web:
+    build: .
+    ports:
+      - "3000:3000"
+    env_file:
+      - .env
+    environment:
+      - DATABASE_URL=file:/app/data/app.db
+      - NODE_ENV=production
+    volumes:
+      - portfolio_data:/app/data
+      - portfolio_uploads:/app/public/uploads
+    restart: unless-stopped
+
+volumes:
+  portfolio_data:
+  portfolio_uploads:

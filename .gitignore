@@ -1,0 +1,23 @@
+node_modules/
+.next/
+out/
+build/
+
+# database
+data/*
+!data/.gitkeep
+*.db
+*.db-journal
+
+# uploads
+public/uploads/*
+!public/uploads/.gitkeep
+
+# env
+.env
+.env.local
+
+# misc
+.DS_Store
+*.log
+npm-debug.log*
