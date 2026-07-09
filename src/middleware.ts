@@ -4,7 +4,8 @@ import { verifySessionToken, SESSION_COOKIE } from "@/lib/auth";
 export async function middleware(req: NextRequest) {
   const { pathname } = req.nextUrl;
 
-  const isAdminPage = pathname.startsWith("/admin") && pathname !== "/admin/login";
+  const isAdminPage =
+    pathname.startsWith("/admin") && pathname !== "/admin/login" && pathname !== "/admin/setup";
   const isProtectedApi =
     (pathname.startsWith("/api/projects") && req.method !== "GET") ||
     pathname.startsWith("/api/auth/logout");

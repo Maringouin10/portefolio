@@ -6,9 +6,9 @@ import { usePathname, useRouter } from "next/navigation";
 export default function AdminLayout({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
   const router = useRouter();
-  const isLogin = pathname === "/admin/login";
+  const isAuthPage = pathname === "/admin/login" || pathname === "/admin/setup";
 
-  if (isLogin) {
+  if (isAuthPage) {
     return <div className="min-h-screen bg-black text-white flex items-center justify-center p-6">{children}</div>;
   }
 

@@ -1,32 +1,22 @@
 import { NextRequest, NextResponse } from "next/server";
-import bcrypt from "bcryptjs";
+import { verifyAdmin } from "@/lib/admin";
 import { createSessionToken, SESSION_COOKIE } from "@/lib/auth";
 
 export async function POST(req: NextRequest) {
   const body = await req.json().catch(() => null);
-  const email = body?.email as string | undefined;
+  const email = (body?.email as string | undefined)?.trim();
   const password = body?.password as string | undefined;
 
-  const adminEmail = process.env.ADMIN_EMAIL;
-  const adminHash = process.env.ADMIN_PASSWORD_HASH;
-
-  if (!adminEmail || !adminHash) {
-    return NextResponse.json(
-      { error: "Compte admin non configure (variables d'environnement manquantes)" },
-      { status: 500 }
-    );
-  }
-
-  if (!email || !password || email !== adminEmail) {
+  if (!email || !password) {
     return NextResponse.json({ error: "Identifiants invalides" }, { status: 401 });
   }
 
-  const valid = await bcrypt.compare(password, adminHash);
-  if (!valid) {
+  const admin = await verifyAdmin(email, password);
+  if (!admin) {
     return NextResponse.json({ error: "Identifiants invalides" }, { status: 401 });
   }
 
-  const token = await createSessionToken(email);
+  const token = await createSessionToken(admin.email);
   const res = NextResponse.json({ ok: true });
   res.cookies.set(SESSION_COOKIE, token, {
     httpOnly: true,

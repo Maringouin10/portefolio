@@ -7,7 +7,7 @@
     "build": "prisma generate && next build",
     "start": "next start",
     "postinstall": "prisma generate",
-    "hash-password": "node scripts/hash-password.mjs",
+    "reset-admin": "node scripts/reset-admin-password.mjs",
     "db:migrate": "prisma migrate deploy",
     "db:migrate:dev": "prisma migrate dev"
   },
@@ -19,8 +19,7 @@
     "prisma": "^5.18.0",
     "react": "^18.3.1",
     "react-dom": "^18.3.1",
-    "slugify": "^1.6.6",
-    "zod": "^3.23.8"
+    "slugify": "^1.6.6"
   },
   "devDependencies": {
     "@types/bcryptjs": "^2.4.6",
